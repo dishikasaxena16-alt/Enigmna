@@ -1,37 +1,30 @@
 :root {
-    /* Natural Earth & Slate Palette */
-    --bg-main: #f5f4f0;            /* Warm linen off-white */
-    --sidebar-bg: #1c2120;         /* Deep warm charcoal/moss */
-    --sidebar-active: #2a312f;     /* Slightly lighter charcoal for active state */
+    --bg-main: #f5f4f0;
+    --sidebar-bg: #1c2120;
+    --sidebar-active: #2a312f;
     --card-bg: #ffffff;
     
-    /* Brand & Accent Colors */
-    --primary: #2d5a4c;            /* Deep Forest Green */
+    --primary: #2d5a4c;
     --primary-hover: #22453a;
-    --accent: #d97706;             /* Warm Amber */
+    --accent: #d97706;
     
-    /* Text Hierarchy */
-    --text-main: #27272a;          /* Soft graphite */
-    --text-muted: #71717a;         /* Muted zinc */
+    --text-main: #27272a;
+    --text-muted: #71717a;
     --text-light: #a1a1aa;
     
-    /* Structural Elements */
-    --border: #e4e4e7;             /* Soft neutral border */
+    --border: #e4e4e7;
     --border-subtle: #f0f0f2;
     --radius-sm: 6px;
     --radius-md: 10px;
-    --radius-lg: 14px;
     
-    /* System Feedback */
-    --success: #15803d;            /* Forest green badge */
+    --success: #15803d;
     --success-bg: #f0fdf4;
-    --danger: #b91c1c;             /* Muted crimson alert */
+    --danger: #b91c1c;
     --danger-bg: #fef2f2;
     
-    /* Shadows for depth */
-    --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
 * { 
@@ -234,11 +227,28 @@ input:focus, select:focus {
     border: none; 
     font-weight: 600; 
     cursor: pointer; 
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .btn-primary:hover { 
     background: var(--primary-hover); 
+}
+
+/* Filters */
+.filter-btn {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
 }
 
 /* Tables */
@@ -278,11 +288,7 @@ tr:last-child td {
     border-bottom: none; 
 }
 
-tr:hover td {
-    background-color: #fcfcfd;
-}
-
-/* Badges and Interactive Elements */
+/* Badges */
 .badge { 
     padding: 4px 10px; 
     border-radius: 20px; 
@@ -318,8 +324,6 @@ tr:hover td {
     background: var(--primary);
     color: #ffffff;
 }
-
-
 
 
 
