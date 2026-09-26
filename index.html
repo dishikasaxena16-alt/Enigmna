@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockSense - Inventory Management System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="brand">📦 StockSense</div>
+        <ul class="nav-list">
+            <li><button onclick="switchTab(event, 'dashboard')" class="nav-btn active">Dashboard</button></li>
+            <li><button onclick="switchTab(event, 'products')" class="nav-btn">Products Catalog</button></li>
+            <li><button onclick="switchTab(event, 'operations')" class="nav-btn">Operations</button></li>
+            <li><button onclick="switchTab(event, 'adjustments')" class="nav-btn">Stock Adjustments</button></li>
+            <li><button onclick="switchTab(event, 'ledger')" class="nav-btn">Move History</button></li>
+        </ul>
+    </aside>
+
+    <!-- Main Section -->
+    <main class="main">
+        <header>
+            <div class="page-title" id="page-title">Dashboard Overview</div>
+            <button onclick="resetSystemData()" style="font-size:0.75rem; background:#fee2e2; color:#b91c1c; border:none; cursor:pointer; padding:6px 12px; border-radius:4px; font-weight:600;">Reset Demo Data</button>
+        </header>
+
+        <div class="container">
+            <!-- 1. DASHBOARD TAB -->
+            <section id="dashboard" class="tab-content active">
+                <div class="kpi-grid">
+                    <div class="card kpi-card">
+                        <h3>Total SKU Items</h3>
+                        <div class="val" id="kpi-total">0</div>
+                    </div>
+                    <div class="card kpi-card alert">
+                        <h3>Low Stock Items</h3>
+                        <div class="val" id="kpi-low" style="color:var(--danger)">0</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <h3>Pending Receipts</h3>
+                        <div class="val" id="kpi-receipts">0</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <h3>Pending Deliveries</h3>
+                        <div class="val" id="kpi-deliveries">0</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <h3>Internal Transfers</h3>
+                        <div class="val" id="kpi-transfers">0</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. PRODUCTS TAB -->
+            <section id="products" class="tab-content">
+                <div class="form-card">
+                    <h3>Add New Product</h3>
+                    <form onsubmit="createProduct(event)" class="form-grid">
+                        <input type="text" id="p-name" placeholder="Product Name" required>
+                        <input type="text" id="p-sku" placeholder="SKU / Code (e.g. SR-001)" required>
+                        <input type="text" id="p-uom" placeholder="Unit of Measure (kg, pcs)" required>
+                        <input type="number" id="p-reorder" placeholder="Min Stock Level" value="10" min="0" required>
+                        <button type="submit" class="btn-primary">Create Item</button>
+                    </form>
+                </div>
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Product Name</th>
+                                <th>SKU</th>
+                                <th>Stock Quantity</th>
+                                <th>Unit</th>
+                                <th>Alert Threshold</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-tb"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 3. OPERATIONS TAB -->
+            <section id="operations" class="tab-content">
+                <div class="form-card">
+                    <h3>Draft Stock Operation</h3>
+                    <form onsubmit="createOperation(event)" class="form-grid">
+                        <select id="op-type" onchange="handleOpTypeChange()" required>
+                            <option value="RECEIPT">Receipt (Incoming Goods)</option>
+                            <option value="DELIVERY">Delivery Order (Outgoing)</option>
+                            <option value="TRANSFER">Internal Move</option>
+                        </select>
+                        <select id="op-product" required></select>
+                        <select id="op-src"></select>
+                        <select id="op-dest"></select>
+                        <input type="number" id="op-qty" placeholder="Quantity" min="1" required>
+                        <button type="submit" class="btn-primary">Create Move</button>
+                    </form>
+                </div>
+
+                <div class="filter-bar" style="margin-bottom:14px; display:flex; gap:8px;">
+                    <button class="filter-btn active" onclick="filterOps('ALL', this)">All</button>
+                    <button class="filter-btn" onclick="filterOps('RECEIPT', this)">Receipts</button>
+                    <button class="filter-btn" onclick="filterOps('DELIVERY', this)">Deliveries</button>
+                    <button class="filter-btn" onclick="filterOps('TRANSFER', this)">Transfers</button>
+                </div>
+
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Operation</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                                <th>Destination</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="operations-tb"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 4. ADJUSTMENTS TAB -->
+            <section id="adjustments" class="tab-content">
+                <div class="form-card">
+                    <h3>Manual Inventory Adjustment</h3>
+                    <form onsubmit="applyAdjustment(event)" class="form-grid">
+                        <select id="adj-product" required></select>
+                        <select id="adj-loc" required></select>
+                        <input type="number" id="adj-qty" placeholder="Actual Counted Quantity" min="0" required>
+                        <button type="submit" class="btn-primary">Reconcile Stock</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 5. LEDGER TAB -->
+            <section id="ledger" class="tab-content">
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Product SKU</th>
+                                <th>Source Location</th>
+                                <th>Destination Location</th>
+                                <th>Quantity Shift</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-tb"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        const defaultState = {
+            nextProductId: 3,
+            nextOpId: 1,
+            locations: [
+                { id: 1, name: 'Main Warehouse' },
+                { id: 2, name: 'Production Rack' },
+                { id: 3, name: 'Shipping Dock' }
+            ],
+            products: [
+                { id: 1, name: 'Steel Rods', sku: 'SR-001', uom: 'kg', reorder: 50 },
+                { id: 2, name: 'Office Chairs', sku: 'OC-200', uom: 'pcs', reorder: 10 }
+            ],
+            stockLevels: {
+                '1-1': 100,
+                '2-1': 5
+            },
+            operations: [],
+            ledger: []
+        };
+
+        let state = JSON.parse(localStorage.getItem('stocksense_db')) || defaultState;
+        let activeOpFilter = 'ALL';
+
+        function sanitize(str) {
+            const temp = document.createElement('div');
+            temp.textContent = str;
+            return temp.innerHTML;
+        }
+
+        function saveState() {
+            localStorage.setItem('stocksense_db', JSON.stringify(state));
+            refreshUI();
+        }
+
+        function resetSystemData() {
+            if (confirm("Are you sure you want to reset all demo data?")) {
+                localStorage.removeItem('stocksense_db');
+                location.reload();
+            }
+        }
+
+        function switchTab(evt, tabId) {
+            document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            evt.currentTarget.classList.add('active');
+            document.getElementById('page-title').innerText = evt.currentTarget.innerText;
+            refreshUI();
+        }
+
+        function handleOpTypeChange() {
+            const type = document.getElementById('op-type').value;
+            const srcEl = document.getElementById('op-src');
+            const destEl = document.getElementById('op-dest');
+
+            if (type === 'RECEIPT') {
+                srcEl.style.display = 'none';
+                srcEl.required = false;
+                destEl.style.display = 'block';
+                destEl.required = true;
+            } else if (type === 'DELIVERY') {
+                srcEl.style.display = 'block';
+                srcEl.required = true;
+                destEl.style.display = 'none';
+                destEl.required = false;
+            } else {
+                srcEl.style.display = 'block';
+                srcEl.required = true;
+                destEl.style.display = 'block';
+                destEl.required = true;
+            }
+        }
+
+        function filterOps(type, btn) {
+            activeOpFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            refreshUI();
+        }
+
+        function refreshUI() {
+            handleOpTypeChange();
+
+            const prodOptions = state.products.map(p => `<option value="${p.id}">${sanitize(p.name)} (${sanitize(p.sku)})</option>`).join('');
+            const locOptions = state.locations.map(l => `<option value="${l.id}">${sanitize(l.name)}</option>`).join('');
+            
+            document.getElementById('op-product').innerHTML = prodOptions || `<option value="">No Products Available</option>`;
+            document.getElementById('adj-product').innerHTML = prodOptions || `<option value="">No Products Available</option>`;
+            
+            document.getElementById('op-src').innerHTML = `<option value="">Select Source Location</option>` + locOptions;
+            document.getElementById('op-dest').innerHTML = `<option value="">Select Destination Location</option>` + locOptions;
+            document.getElementById('adj-loc').innerHTML = `<option value="">Select Location</option>` + locOptions;
+
+            // Products Table
+            const prodTb = document.getElementById('products-tb');
+            prodTb.innerHTML = state.products.map(p => {
+                const totalStock = state.locations.reduce((acc, l) => acc + (state.stockLevels[`${p.id}-${l.id}`] || 0), 0);
+                return `
+                    <tr>
+                        <td>#${p.id}</td>
+                        <td><strong>${sanitize(p.name)}</strong></td>
+                        <td>${sanitize(p.sku)}</td>
+                        <td style="color:${totalStock <= p.reorder ? 'var(--danger)' : 'inherit'}"><strong>${totalStock}</strong></td>
+                        <td>${sanitize(p.uom)}</td>
+                        <td>${p.reorder}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Operations Table
+            const filteredOps = state.operations.filter(o => activeOpFilter === 'ALL' || o.type === activeOpFilter);
+            const opTb = document.getElementById('operations-tb');
+            opTb.innerHTML = filteredOps.map(o => {
+                const src = state.locations.find(l => l.id == o.srcId)?.name || 'External Vendor';
+                const dest = state.locations.find(l => l.id == o.destId)?.name || 'External Customer';
+                return `
+                    <tr>
+                        <td>#${o.id}</td>
+                        <td>${o.type} (${o.qty} units)</td>
+                        <td><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></td>
+                        <td>${sanitize(src)}</td>
+                        <td>${sanitize(dest)}</td>
+                        <td>${o.status === 'Draft' ? `<button class="btn-action" onclick="validateOp(${o.id})">Validate</button>` : ''}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Ledger Table
+            const ledgerTb = document.getElementById('ledger-tb');
+            ledgerTb.innerHTML = [...state.ledger].reverse().map(l => {
+                const prod = state.products.find(p => p.id == l.productId);
+                const src = state.locations.find(loc => loc.id == l.srcId)?.name || 'External Vendor';
+                const dest = state.locations.find(loc => loc.id == l.destId)?.name || 'External Customer';
+                return `
+                    <tr>
+                        <td>${new Date(l.timestamp).toLocaleTimeString()}</td>
+                        <td>${sanitize(prod?.sku || 'Item')}</td>
+                        <td>${sanitize(src)}</td>
+                        <td>${sanitize(dest)}</td>
+                        <td style="color:${l.qtyShift > 0 ? 'var(--success)' : 'var(--danger)'}"><strong>${l.qtyShift > 0 ? '+' : ''}${l.qtyShift}</strong></td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Dashboard KPIs
+            document.getElementById('kpi-total').innerText = state.products.length;
+            
+            const lowCount = state.products.filter(p => {
+                const totalStock = state.locations.reduce((acc, l) => acc + (state.stockLevels[`${p.id}-${l.id}`] || 0), 0);
+                return totalStock <= p.reorder;
+            }).length;
+
+            document.getElementById('kpi-low').innerText = lowCount;
+            document.getElementById('kpi-receipts').innerText = state.operations.filter(o => o.type === 'RECEIPT' && o.status === 'Draft').length;
+            document.getElementById('kpi-deliveries').innerText = state.operations.filter(o => o.type === 'DELIVERY' && o.status === 'Draft').length;
+            document.getElementById('kpi-transfers').innerText = state.operations.filter(o => o.type === 'TRANSFER' && o.status === 'Draft').length;
+        }
+
+        function createProduct(e) {
+            e.preventDefault();
+            const newProd = {
+                id: state.nextProductId || (state.products.length + 1),
+                name: document.getElementById('p-name').value.trim(),
+                sku: document.getElementById('p-sku').value.trim(),
+                uom: document.getElementById('p-uom').value.trim(),
+                reorder: parseFloat(document.getElementById('p-reorder').value) || 0
+            };
+            state.nextProductId = newProd.id + 1;
+            state.products.push(newProd);
+            e.target.reset();
+            saveState();
+        }
+
+        function createOperation(e) {
+            e.preventDefault();
+            const type = document.getElementById('op-type').value;
+            let srcId = document.getElementById('op-src').value;
+            let destId = document.getElementById('op-dest').value;
+
+            if (type === 'RECEIPT') {
+                srcId = null;
+                if (!destId) destId = "1"; // Default to Main Warehouse
+            } else if (type === 'DELIVERY') {
+                destId = null;
+                if (!srcId) {
+                    alert("Please select a Source Location for deliveries.");
+                    return;
+                }
+            } else if (type === 'TRANSFER') {
+                if (!srcId || !destId) {
+                    alert("Internal transfers require both Source and Destination locations.");
+                    return;
+                }
+                if (srcId === destId) {
+                    alert("Source and Destination locations cannot be the same.");
+                    return;
+                }
+            }
+
+            const newOp = {
+                id: state.nextOpId || (state.operations.length + 1),
+                type: type,
+                productId: parseInt(document.getElementById('op-product').value),
+                srcId: srcId ? parseInt(srcId) : null,
+                destId: destId ? parseInt(destId) : null,
+                qty: parseFloat(document.getElementById('op-qty').value),
+                status: 'Draft'
+            };
+            state.nextOpId = newOp.id + 1;
+            state.operations.push(newOp);
+            e.target.reset();
+            saveState();
+        }
+
+        function validateOp(opId) {
+            const op = state.operations.find(o => o.id === opId);
+            if (!op || op.status === 'Done') return;
+
+            if (op.srcId) {
+                const key = `${op.productId}-${op.srcId}`;
+                const curr = state.stockLevels[key] || 0;
+                if (curr < op.qty) {
+                    alert(`Insufficient inventory at source location! (Available: ${curr}, Requested: ${op.qty})`);
+                    return;
+                }
+                state.stockLevels[key] = curr - op.qty;
+            }
+
+            if (op.destId) {
+                const key = `${op.productId}-${op.destId}`;
+                state.stockLevels[key] = (state.stockLevels[key] || 0) + op.qty;
+            }
+
+            op.status = 'Done';
+            state.ledger.push({
+                timestamp: new Date().toISOString(),
+                productId: op.productId,
+                srcId: op.srcId,
+                destId: op.destId,
+                qtyShift: op.destId ? op.qty : -op.qty
+            });
+
+            saveState();
+        }
+
+        function applyAdjustment(e) {
+            e.preventDefault();
+            const prodId = parseInt(document.getElementById('adj-product').value);
+            const locId = parseInt(document.getElementById('adj-loc').value);
+            const counted = parseFloat(document.getElementById('adj-qty').value);
+
+            if (!locId) {
+                alert("Please select a location for adjustment.");
+                return;
+            }
+
+            const key = `${prodId}-${locId}`;
+            const previous = state.stockLevels[key] || 0;
+            const diff = counted - previous;
+
+            state.stockLevels[key] = counted;
+            state.ledger.push({
+                timestamp: new Date().toISOString(),
+                productId: prodId,
+                srcId: diff < 0 ? locId : null,
+                destId: diff > 0 ? locId : null,
+                qtyShift: diff
+            });
+
+            e.target.reset();
+            saveState();
+            alert('Inventory entry adjusted successfully.');
+        }
+
+        // Initialize App
+        refreshUI();
+    </script>
+</body>
+</html>
+
